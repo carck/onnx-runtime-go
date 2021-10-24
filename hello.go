@@ -17,7 +17,7 @@ func main() {
 	inputNames := []string{"input.1"}
 	outputNames := []string{"683"}
 
-	model := onnx.NewModel("facenet.onnx", shape, inputNames, outputNames)
+	model := onnx.NewModel("facenet.onnx", shape, inputNames, outputNames, onnx.CPU)
 	defer model.Delete()
 
 	data := make([]float32, 1*3*112*112)
@@ -25,7 +25,6 @@ func main() {
 	defer output.Delete()
 
 	log.Println("num dims: %s", output.NumDims())
-	git
 
 	res := make([]float32, 512)
 	output.CopyToBuffer(res, 512*4)

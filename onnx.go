@@ -14,46 +14,51 @@ import (
 )
 
 type Model struct {
-	env         *C.OnnxEnv
-	shape       []int64
-	inputNames  []string
-	outputNames []string
+	env *C.OnnxEnv
 }
 
 type Tensor struct {
 	t *C.OrtValue
 }
 
-func NewModel(model_path string, shape []int64, inputNames []string, outputNames []string) *Model {
+type EP int
+
+const (
+	CPU EP = iota
+	CUDA
+	ROCM
+	ARMNN
+)
+
+func NewModel(model_path string, shape []int64, inputNames []string, outputNames []string, mode EP) *Model {
 	ptr := C.CString(model_path)
 	defer C.free(unsafe.Pointer(ptr))
 
-	t := C.OnnxNewOrtSession(ptr)
+	t := C.OnnxNewOrtSession(ptr, C.int(mode))
 
-	return &Model{env: t, shape: shape, inputNames: inputNames, outputNames: outputNames}
+	t.input_shape_len = C.size_t(len(shape))
+	for i, s := range shape {
+		t.input_shape[i] = C.longlong(s)
+	}
+
+	t.input_names_len = C.size_t(len(inputNames))
+	for i, s := range inputNames {
+		t.input_names[i] = C.CString(s)
+	}
+
+	t.output_names_len = C.size_t(len(outputNames))
+	for i, s := range outputNames {
+		t.output_names[i] = C.CString(s)
+	}
+
+	return &Model{env: t}
 }
 
 // Invoke invoke the task.
 func (m *Model) RunInference(data []float32) *Tensor {
-	inputNames := C.MakeCharArray(C.int(len(m.inputNames)))
-	defer C.FreeCharArray(inputNames, C.int(len(m.inputNames)))
-	for i, s := range m.inputNames {
-		C.SetArrayString(inputNames, C.CString(s), C.int(i))
-	}
-
-	outputNames := C.MakeCharArray(C.int(len(m.outputNames)))
-	defer C.FreeCharArray(outputNames, C.int(len(m.outputNames)))
-	for i, s := range m.outputNames {
-		C.SetArrayString(outputNames, C.CString(s), C.int(i))
-	}
-
 	t := C.OnnxRunInference(m.env,
 		(*C.float)(unsafe.Pointer(&data[0])),
 		C.size_t(len(data)*4),
-		(*C.int64_t)(unsafe.Pointer(&m.shape[0])),
-		C.size_t(len(m.shape)),
-		inputNames,
-		outputNames,
 	)
 	return &Tensor{t: t}
 }

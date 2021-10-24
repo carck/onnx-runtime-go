@@ -17,6 +17,10 @@
     }                                                        \
   } while (0);
 
+// ORT spec
+ORT_API_STATUS(OrtSessionOptionsAppendExecutionProvider_ArmNN, _In_ OrtSessionOptions* options, int use_arena)
+ORT_ALL_ARGS_NONNULL;
+
 const OrtApi* g_ort = NULL;
 
 void VerifyInputOutputCount(OrtSession* session) {
@@ -27,7 +31,7 @@ void VerifyInputOutputCount(OrtSession* session) {
   assert(count == 1);
 }
 
-OnnxEnv* OnnxNewOrtSession(const char* model_path){
+OnnxEnv* OnnxNewOrtSession(const char* model_path, int mode){
 	int ret = 0;
 
 	if(g_ort == NULL){
@@ -45,6 +49,12 @@ OnnxEnv* OnnxNewOrtSession(const char* model_path){
 	
 	ORT_ABORT_ON_ERROR(g_ort->CreateSessionOptions(&onnx_env->session_options));
 
+#ifdef ARM
+	if(mode == MODE_ARMNN){
+		ORT_ABORT_ON_ERROR(OrtSessionOptionsAppendExecutionProvider_ArmNN(onnx_env->session_options, 0));
+	}
+#endif
+
 	ORT_ABORT_ON_ERROR(g_ort->CreateSession(onnx_env->env, model_path, onnx_env->session_options, &onnx_env->session));
 
 	VerifyInputOutputCount(onnx_env->session);
@@ -57,20 +67,21 @@ void OnnxDeleteOrtSession(OnnxEnv* env){
 		g_ort->ReleaseSessionOptions(env->session_options);
 		g_ort->ReleaseSession(env->session);
 		g_ort->ReleaseEnv(env->env);
+		FreeCharArray(env->input_names, env->input_names_len);
+		FreeCharArray(env->output_names, env->output_names_len);
+		free(env);
 	}
 }
 
 OrtValue* OnnxRunInference(OnnxEnv* env, 
-					float * model_input, size_t model_input_len, 
-					int64_t* input_shape, size_t input_shape_len,
-					const char* input_names[], const char* output_names[]){
+					float * model_input, size_t model_input_len){
 
 	OrtMemoryInfo* memory_info;
 	ORT_ABORT_ON_ERROR(g_ort->CreateCpuMemoryInfo(OrtArenaAllocator, OrtMemTypeDefault, &memory_info));
 	
 	OrtValue* input_tensor = NULL;
-	ORT_ABORT_ON_ERROR(g_ort->CreateTensorWithDataAsOrtValue(memory_info, model_input, model_input_len, input_shape,
-															input_shape_len, ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,
+	ORT_ABORT_ON_ERROR(g_ort->CreateTensorWithDataAsOrtValue(memory_info, model_input, model_input_len, env->input_shape,
+															env->input_shape_len, ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,
 															&input_tensor));
 	assert(input_tensor != NULL);
 
@@ -81,8 +92,8 @@ OrtValue* OnnxRunInference(OnnxEnv* env,
 	g_ort->ReleaseMemoryInfo(memory_info);
 
 	OrtValue* output_tensor = NULL;
-	ORT_ABORT_ON_ERROR(g_ort->Run(env->session, NULL, input_names, (const OrtValue* const*)&input_tensor, 1, output_names, 1,
-									&output_tensor));
+	ORT_ABORT_ON_ERROR(g_ort->Run(env->session, NULL, (const char *const *)env->input_names, (const OrtValue* const*)&input_tensor, env->input_names_len, 
+									(const char *const *)env->output_names, env->output_names_len, &output_tensor));
 	assert(output_tensor != NULL);
 
 	ORT_ABORT_ON_ERROR(g_ort->IsTensor(output_tensor, &is_tensor));
@@ -125,17 +136,9 @@ void OnnxTensorCopyToBuffer(OrtValue* tensor, void * value, size_t size){
 	memcpy(value, f, size);
 }
 
-char** MakeCharArray(int size) {
-        return calloc(sizeof(char*), size);
-}
-
-void SetArrayString(char **a, char *s, int n) {
-        a[n] = s;
-}
-
-void FreeCharArray(char **a, int size) {
-        int i;
-        for (i = 0; i < size; i++)
-                free(a[i]);
-        free(a);
+static void FreeCharArray(char **a, size_t size) {
+	int i;
+	for (i = 0; i < size; i++){
+		free(a[i]);
+	}
 }

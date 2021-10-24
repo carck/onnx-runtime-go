@@ -18,7 +18,9 @@ import (
 
 func main() {
 	shape := []int64{1, 3, 112, 112}
-	model := onnx.NewModel("facenet.onnx", shape)
+	inputNames := []string{"input.1"}
+	outputNames := []string{"683"}
+	model := onnx.NewModel("facenet.onnx", shape, inputNames, outputNames, onnx.CPU)
 	defer model.Delete()
 
 	data := make([]float32, 1*3*112*112)
