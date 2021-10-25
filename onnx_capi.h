@@ -15,7 +15,8 @@
 
 #define MODE_CUDA 1
 #define MODE_ROCM 2
-#define MODE_ARMNN 2
+#define MODE_ARMNN 3
+#define MODE_TENSOR_RT 4
 
 typedef struct {
 	OrtEnv* env;

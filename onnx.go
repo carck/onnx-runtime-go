@@ -28,6 +28,7 @@ const (
 	CUDA
 	ROCM
 	ARMNN
+	TENSORRT
 )
 
 func NewModel(model_path string, shape []int64, inputNames []string, outputNames []string, mode EP) *Model {

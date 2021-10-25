@@ -21,15 +21,15 @@
 ORT_API_STATUS(OrtSessionOptionsAppendExecutionProvider_ArmNN, _In_ OrtSessionOptions* options, int use_arena)
 ORT_ALL_ARGS_NONNULL;
 
+ORT_API_STATUS(OrtSessionOptionsAppendExecutionProvider_CUDA, _In_ OrtSessionOptions* options, int device_id);
+ORT_API_STATUS(OrtSessionOptionsAppendExecutionProvider_Tensorrt, _In_ OrtSessionOptions* options, int device_id);
+
 const OrtApi* g_ort = NULL;
 
-void VerifyInputOutputCount(OrtSession* session) {
-  size_t count;
-  ORT_ABORT_ON_ERROR(g_ort->SessionGetInputCount(session, &count));
-  assert(count == 1);
-  ORT_ABORT_ON_ERROR(g_ort->SessionGetOutputCount(session, &count));
-  assert(count == 1);
-}
+void VerifyInputOutputCount(OrtSession* session);
+
+void SetupExecutionProvider(OrtSessionOptions* session_options, int mode);
+
 
 OnnxEnv* OnnxNewOrtSession(const char* model_path, int mode){
 	int ret = 0;
@@ -49,17 +49,47 @@ OnnxEnv* OnnxNewOrtSession(const char* model_path, int mode){
 	
 	ORT_ABORT_ON_ERROR(g_ort->CreateSessionOptions(&onnx_env->session_options));
 
-#ifdef ARM
-	if(mode == MODE_ARMNN){
-		ORT_ABORT_ON_ERROR(OrtSessionOptionsAppendExecutionProvider_ArmNN(onnx_env->session_options, 0));
-	}
-#endif
+	SetupExecutionProvider(onnx_env->session_options, mode);
 
 	ORT_ABORT_ON_ERROR(g_ort->CreateSession(onnx_env->env, model_path, onnx_env->session_options, &onnx_env->session));
 
 	VerifyInputOutputCount(onnx_env->session);
 
   	return onnx_env;
+}
+
+void VerifyInputOutputCount(OrtSession* session) {
+  size_t count;
+  ORT_ABORT_ON_ERROR(g_ort->SessionGetInputCount(session, &count));
+  assert(count == 1);
+  ORT_ABORT_ON_ERROR(g_ort->SessionGetOutputCount(session, &count));
+  assert(count == 1);
+}
+
+void SetupExecutionProvider(OrtSessionOptions* session_options, int mode){
+#ifdef ARM
+	if(mode == MODE_ARMNN){
+		ORT_ABORT_ON_ERROR(OrtSessionOptionsAppendExecutionProvider_ArmNN(session_options, 0));
+	}
+#endif
+#ifdef CUDA
+	if(mode == MODE_CUDA){
+		int device_id = 0;
+		ORT_ABORT_ON_ERROR(OrtSessionOptionsAppendExecutionProvider_CUDA(session_options, device_id));
+	} 
+#endif
+#ifdef TENSOR_RT
+	 if (mode == MODE_TENSOR_RT) {
+		int device_id = 0;
+		ORT_ABORT_ON_ERROR(OrtSessionOptionsAppendExecutionProvider_Tensorrt(session_options, device_id));
+	} 
+#endif
+#ifdef ROCM
+	 if (mode == MODE_ROCM) {
+		int device_id = 0;
+		ORT_ABORT_ON_ERROR(OrtSessionOptionsAppendExecutionProvider_Rocm(session_options, device_id));
+	}
+#endif
 }
 
 void OnnxDeleteOrtSession(OnnxEnv* env){
