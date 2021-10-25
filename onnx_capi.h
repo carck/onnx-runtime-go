@@ -7,7 +7,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <onnxruntime_c_api.h>
+#include <onnxruntime/core/session/onnxruntime_c_api.h>
 
 #define MAX_IN 10
 #define MAX_OUT 10

@@ -39,7 +39,7 @@ func NewModel(model_path string, shape []int64, inputNames []string, outputNames
 
 	t.input_shape_len = C.size_t(len(shape))
 	for i, s := range shape {
-		t.input_shape[i] = C.longlong(s)
+		t.input_shape[i] = C.int64_t(s)
 	}
 
 	t.input_names_len = C.size_t(len(inputNames))
