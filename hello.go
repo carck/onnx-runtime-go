@@ -17,16 +17,18 @@ func main() {
 	inputNames := []string{"input.1"}
 	outputNames := []string{"683"}
 
-	model := onnx.NewModel("facenet.onnx", shape, inputNames, outputNames, onnx.CPU)
+	model := onnx.NewModel("facenet.onnx", shape, inputNames, outputNames, onnx.ARMNN)
 	defer model.Delete()
 
-	data := make([]float32, 1*3*112*112)
-	output := model.RunInference(data)
-	defer output.Delete()
+	for i := 1; i <= 10; i++ {
+		data := make([]float32, 1*3*112*112)
+		output := model.RunInference(data)
+		defer output.Delete()
 
-	log.Println("num dims: %s", output.NumDims())
+		log.Println("num dims: %s", output.NumDims())
 
-	res := make([]float32, 512)
-	output.CopyToBuffer(res, 512*4)
-	fmt.Printf("%v", res)
+		res := make([]float32, 512)
+		output.CopyToBuffer(res, 512*4)
+		fmt.Printf("%v", res)
+	}
 }

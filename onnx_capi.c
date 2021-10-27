@@ -35,6 +35,7 @@ OnnxEnv* OnnxNewOrtSession(const char* model_path, int mode){
 	int ret = 0;
 
 	if(g_ort == NULL){
+		printf("ORT: v%d", ORT_API_VERSION);
 		g_ort = OrtGetApiBase()->GetApi(ORT_API_VERSION);
 		if (!g_ort) {
 			printf("runtime init error!\n");
@@ -67,7 +68,7 @@ void VerifyInputOutputCount(OrtSession* session) {
 }
 
 void SetupExecutionProvider(OrtSessionOptions* session_options, int mode){
-#ifdef ARM
+#ifdef ARMNN 
 	if(mode == MODE_ARMNN){
 		ORT_ABORT_ON_ERROR(OrtSessionOptionsAppendExecutionProvider_ArmNN(session_options, 0));
 	}
