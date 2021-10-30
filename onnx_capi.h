@@ -47,7 +47,11 @@ void OnnxTensorCopyToBuffer(OrtValue*  tensor, void * value, size_t size);
 // Array helper
 static void FreeCharArray(char **a, size_t size);
 
+float** MakeFloatArray(int size);
+void SetFloatArray(float **a, float *s, int n);
+void FreeFloatArray(float **a);
+
 //utils
-float EuclideanDistance512(float a[], float b[]);
+void EuclideanDistance512(float **d, float *res, int ai, int bi, int end);
 
 #endif // onnx_capi_h_

@@ -30,24 +30,22 @@ func main() {
 
 		res := make([]float32, 512)
 		output.CopyToBuffer(res, 512*4)
-		fmt.Printf("%v\n", res)
+		//fmt.Printf("%v\n", res)
 	}
 
-	d1 := make([]float32, 512)
-	d2 := make([]float32, 512)
-	for j := 0; j < 512; j++ {
-		d1[j] = float32(0.1)
-		d2[j] = float32(0.9)
+	d := make([][]float32, 1000)
+	for j := 0; j < 1000; j++ {
+		r := make([]float32, 512)
+		for i := 0; i < 512; i++ {
+			r[i] = 0.1 * float32(i) * float32(j)
+		}
+		d[j] = r
 	}
 	s := time.Now().UnixNano()
-	for j := 1; j <= 1000000; j++ {
-		onnx.EuclideanDistance512(d1, d2)
-	}
+	onnx.EuclideanDistance512(d, 0, 1, 512)
 	fmt.Printf("%d\n", time.Now().UnixNano()-s)
 
 	s = time.Now().UnixNano()
-	for j := 1; j <= 1000000; j++ {
-		onnx.EuclideanDistance512C(d1, d2)
-	}
+	onnx.EuclideanDistance512C(d, 0, 1, 512)
 	fmt.Printf("%d\n", time.Now().UnixNano()-s)
 }

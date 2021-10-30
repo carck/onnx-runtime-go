@@ -174,13 +174,30 @@ static void FreeCharArray(char **a, size_t size) {
 	}
 }
 
-float EuclideanDistance512(float a[], float b[]) {
-	float s=0, t=0;
+float** MakeFloatArray(int size) {
+        return calloc(sizeof(float*), size);
+}
 
-	for (int i = 0; i < 512; i++) {
-		t = a[i] - b[i];
-		s += t * t;
+void SetFloatArray(float **a, float *s, int n) {
+        a[n] = s;
+}
+
+void FreeFloatArray(float **a) {
+        free(a);
+}
+
+void EuclideanDistance512(float **d, float *res, int ai, int bi, int end) {
+	float s,t;
+	float *left = d[ai];
+	int c = 0;
+	for (int j = bi; j < end; j++ ){
+		s=0;
+		t=0;
+		float *right = d[j];
+		for (int i = 0; i < 512; i++) {
+			t = left[i] - right[i];
+			s += t * t;
+		}
+		res[c++] = (float)sqrt(s);
 	}
-
-	return (float)sqrt(s);
 }

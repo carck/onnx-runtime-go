@@ -101,20 +101,42 @@ func (t *Tensor) CopyToBuffer(b interface{}, size int) {
 	C.OnnxTensorCopyToBuffer(t.t, unsafe.Pointer(reflect.ValueOf(b).Pointer()), C.size_t(size))
 }
 
-var EuclideanDistance512 = func(a, b []float32) float32 {
+var EuclideanDistance512 = func(d [][]float32, ai, bi, end int) []float32 {
 	var (
 		s, t float32
 	)
+	res := make([]float32, end-bi)
+	c := 0
+	for j := bi; j < end; j++ {
+		s = 0
+		t = 0
+		for i := 0; i < 512; i++ {
+			t = d[ai][i] - d[j][i]
+			s += t * t
+		}
 
-	for i := 0; i < 512; i++ {
-		t = a[i] - b[i]
-		s += t * t
+		res[c] = float32(math.Sqrt(float64(s)))
+
+		c++
 	}
-
-	return float32(math.Sqrt(float64(s)))
+	return res
 }
 
-var EuclideanDistance512C = func(a, b []float32) float32 {
-	res := C.EuclideanDistance512((*C.float)(unsafe.Pointer(&a[0])), (*C.float)(unsafe.Pointer(&b[0])))
-	return float32(res)
+var EuclideanDistance512C = func(d [][]float32, ai, bi, end int) []float32 {
+	res := make([]float32, end-bi)
+
+	data := C.MakeFloatArray(C.int(len(d)))
+	defer C.FreeFloatArray(data)
+	for i, v := range d {
+		C.SetFloatArray(data, (*C.float)(unsafe.Pointer(&v[0])), C.int(i))
+	}
+
+	C.EuclideanDistance512(
+		data,
+		(*C.float)(unsafe.Pointer(&res[0])),
+		C.int(ai),
+		C.int(bi),
+		C.int(end),
+	)
+	return res
 }
