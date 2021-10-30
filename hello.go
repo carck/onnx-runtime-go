@@ -18,7 +18,7 @@ func main() {
 	inputNames := []string{"input.1"}
 	outputNames := []string{"683"}
 
-	model := onnx.NewModel("facenet.onnx", shape, inputNames, outputNames, onnx.ARMNN)
+	model := onnx.NewModel("facenet.onnx", shape, inputNames, outputNames, onnx.CPU)
 	defer model.Delete()
 
 	for i := 1; i <= 10; i++ {

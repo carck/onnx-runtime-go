@@ -4,7 +4,7 @@
 package onnx
 
 /*
-#cgo LDFLAGS: -lonnxruntime
+#cgo LDFLAGS: -lonnxruntime -lm
 #cgo CFLAGS: -O3
 #cgo arm64 CFLAGS: -DARMNN=1
 #include "onnx_capi.h"

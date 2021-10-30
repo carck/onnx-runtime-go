@@ -191,8 +191,7 @@ void EuclideanDistance512(float **d, float *res, int ai, int bi, int end) {
 	float *left = d[ai];
 	int c = 0;
 	for (int j = bi; j < end; j++ ){
-		s=0;
-		t=0;
+		s = 0;
 		float *right = d[j];
 		for (int i = 0; i < 512; i++) {
 			t = left[i] - right[i];
