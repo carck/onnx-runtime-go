@@ -4,6 +4,7 @@
 #include "onnx_capi.h"
 
 #include <stdio.h>
+#include <math.h>
 #include <assert.h>
 
 #define ORT_ABORT_ON_ERROR(expr)                             \
@@ -35,7 +36,6 @@ OnnxEnv* OnnxNewOrtSession(const char* model_path, int mode){
 	int ret = 0;
 
 	if(g_ort == NULL){
-		printf("ORT: v%d", ORT_API_VERSION);
 		g_ort = OrtGetApiBase()->GetApi(ORT_API_VERSION);
 		if (!g_ort) {
 			printf("runtime init error!\n");
@@ -172,4 +172,15 @@ static void FreeCharArray(char **a, size_t size) {
 	for (i = 0; i < size; i++){
 		free(a[i]);
 	}
+}
+
+float EuclideanDistance512(float a[], float b[]) {
+	float s=0, t=0;
+
+	for (int i = 0; i < 512; i++) {
+		t = a[i] - b[i];
+		s += t * t;
+	}
+
+	return (float)sqrt(s);
 }

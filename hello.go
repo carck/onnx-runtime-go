@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/carck/onnx-runtime-go"
 	"log"
+	"time"
 )
 
 func main() {
@@ -29,6 +30,24 @@ func main() {
 
 		res := make([]float32, 512)
 		output.CopyToBuffer(res, 512*4)
-		fmt.Printf("%v", res)
+		fmt.Printf("%v\n", res)
 	}
+
+	d1 := make([]float32, 512)
+	d2 := make([]float32, 512)
+	for j := 0; j < 512; j++ {
+		d1[j] = float32(0.1)
+		d2[j] = float32(0.9)
+	}
+	s := time.Now().UnixNano()
+	for j := 1; j <= 1000000; j++ {
+		onnx.EuclideanDistance512(d1, d2)
+	}
+	fmt.Printf("%d\n", time.Now().UnixNano()-s)
+
+	s = time.Now().UnixNano()
+	for j := 1; j <= 1000000; j++ {
+		onnx.EuclideanDistance512C(d1, d2)
+	}
+	fmt.Printf("%d\n", time.Now().UnixNano()-s)
 }

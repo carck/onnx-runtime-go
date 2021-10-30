@@ -5,11 +5,13 @@ package onnx
 
 /*
 #cgo LDFLAGS: -lonnxruntime
+#cgo CFLAGS: -O3
 #cgo arm64 CFLAGS: -DARMNN=1
 #include "onnx_capi.h"
 */
 import "C"
 import (
+	"math"
 	"reflect"
 	"unsafe"
 )
@@ -97,4 +99,22 @@ func (t *Tensor) Delete() {
 
 func (t *Tensor) CopyToBuffer(b interface{}, size int) {
 	C.OnnxTensorCopyToBuffer(t.t, unsafe.Pointer(reflect.ValueOf(b).Pointer()), C.size_t(size))
+}
+
+var EuclideanDistance512 = func(a, b []float32) float32 {
+	var (
+		s, t float32
+	)
+
+	for i := 0; i < 512; i++ {
+		t = a[i] - b[i]
+		s += t * t
+	}
+
+	return float32(math.Sqrt(float64(s)))
+}
+
+var EuclideanDistance512C = func(a, b []float32) float32 {
+	res := C.EuclideanDistance512((*C.float)(unsafe.Pointer(&a[0])), (*C.float)(unsafe.Pointer(&b[0])))
+	return float32(res)
 }
